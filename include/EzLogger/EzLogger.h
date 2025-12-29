@@ -1,9 +1,38 @@
 #pragma once
 
 #include <iostream>
-#include <Windows.h>
-#include <string>
+#if defined(_WIN32) || defined(_WIN64)
+# define EZ_WINDOWS
+#elif defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))
+#   define EZ_POSIX
+#endif
 
+#if defined(EZ_WINDOWS)
+#   include <Windows.h>
+#elif defined(EZ_POSIX)
+#   include <unistd.h>
+#endif
+
+#include <string>
+#include <format>
+
+namespace ezlog
+{
+    void info(const std::string& msg)
+    {
+        // std::cout << "\033[32m" << msg << '\n' << "\033[00m";
+        std::cout << "\e[4;32m" << msg << '\n' << "\e[0;0m";
+    }
+    // class EzLogger
+    // {
+    // public:
+    //
+    // private:
+    //
+    // };
+}
+
+#ifdef EZ_WINDOWS
 #define F_DARKBLUE     0x0001
 #define F_GREEN        0x0002
 #define F_LIGHTBLUE    0x0003
@@ -126,3 +155,4 @@ namespace EzLogger
         std::string m_Type, m_Format;
 	};
 }
+#endif
