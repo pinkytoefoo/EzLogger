@@ -43,21 +43,21 @@ namespace ezlog
         logger();
         logger(level lvl);
         ~logger() = default;
-        // TODO: replace with string_view
-        void log(const std::string& msg, color c = color::default_);
+
+        void log(std::string_view, color c = color::default_);
         template<typename... Args>
         void log(color c, std::format_string<Args...>, Args&&... args)
         {
             write(std::format("{}", std::forward<Args>(args)...), c);
         }
 
-        void trace(const std::string& msg);
-        void info(const std::string& msg);
-        void warn(const std::string& msg);
-        void error(const std::string& msg);
+        void trace(std::string_view msg);
+        void info(std::string_view msg);
+        void warn(std::string_view msg);
+        void error(std::string_view msg);
     private:
         void write(std::string_view msg, color c); 
-        void log_if(const std::string& msg, level lvl, color c = color::default_);
+        void log_if(std::string_view msg, level lvl, color c = color::default_);
         level level_{level::trace};
         bool ansi_enabled_{true};
     };

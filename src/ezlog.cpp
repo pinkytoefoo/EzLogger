@@ -17,27 +17,27 @@ namespace ezlog
         ansi_enabled_ = platform::enable_ansi();
     }
     
-    void logger::log(const std::string& msg, color c)
+    void logger::log(std::string_view msg, color c)
     {
         write(msg, c);
     }
         
-    void logger::trace(const std::string& msg)
+    void logger::trace(std::string_view msg)
     {
         log_if(msg, level::trace);
     }
 
-    void logger::info(const std::string& msg)
+    void logger::info(std::string_view msg)
     {
         log_if(msg, level::info, color::green);
     }
 
-    void logger::warn(const std::string& msg)
+    void logger::warn(std::string_view msg)
     {
         log_if(msg, level::warn, color::yellow);
     }
 
-    void logger::error(const std::string& msg)
+    void logger::error(std::string_view msg)
     {
         log_if(msg, level::error, color::red);
     }
@@ -53,7 +53,7 @@ namespace ezlog
     #endif
     }
 
-    void logger::log_if(const std::string& msg, level lvl, color c)
+    void logger::log_if(std::string_view msg, level lvl, color c)
     {
         if(lvl >= level_)
             write(msg, c);
