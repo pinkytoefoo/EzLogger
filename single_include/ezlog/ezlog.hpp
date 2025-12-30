@@ -1,7 +1,13 @@
+//           _             
+//   ___ ___| | ___   __ _ 
+//  / _ \_  / |/ _ \ / _` |
+// |  __// /| | (_) | (_| |
+//  \___/___|_|\___/ \__, |
+//                   |___/ 
+
 #pragma once
 
 #include <cstdlib>
-#include <print>
 
 // TODO: implement this some way
 // bool checkTerminalEmulator()
@@ -24,6 +30,7 @@
 
 #include <string>
 #include <format>
+#include <cstring>
 
 #ifdef EZ_WINDOWS
 static const HANDLE g_handle = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -85,7 +92,7 @@ namespace ezlog
             : level_{level::trace}
         {
             char* wt_session = getenv("WT_SESSION");
-            if(wt_session != nullptr && strnlen(wt_session, 64) > 0) // 64 should be enough bytes
+            if(wt_session != nullptr && strlen(wt_session) > 0) // 64 should be enough bytes
             {
                 #define EZ_POSIX
             }
@@ -124,9 +131,9 @@ namespace ezlog
     private:
         void write(std::string_view msg, color c)
         {
-            #ifdef EZ_POSIX
+            #if defined(EZ_POSIX)
             detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
-            #elifdef EZ_WINDOWS
+            #elif defined(EZ_WINDOWS)
             SET_COLOR(c);
             detail::quick_print("{}", msg);
             SET_COLOR(color::default_);

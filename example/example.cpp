@@ -1,8 +1,7 @@
 #include <memory>
 #include <string>
-#include <iostream>
 
-#include "ezlog/ezlog.h"
+#include "ezlog/ezlog.hpp"
 
 int main()
 {
