@@ -7,17 +7,6 @@
 
 #pragma once
 
-#if defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))
-#   define EZ_POSIX
-#elif defined(_WIN32) || defined(_WIN64)
-#   define EZ_WINDOWS
-#endif
-
-#if defined(EZ_WINDOWS)
-#   include <Windows.h>
-#elif defined(EZ_POSIX)
-#   include <unistd.h>
-#endif
 
 #include <string>
 #include <cstdlib>
@@ -26,10 +15,14 @@
 
 #include "ezlog/color.hpp"
 #include "ezlog/detail.hpp"
+#include "ezlog/core.hpp"
 
-#ifdef EZ_WINDOWS
+#if defined(EZ_WINDOWS)
+#   include <Windows.h>
 static const HANDLE g_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-#define SET_COLOR(color) SetConsoleTextAttribute(g_handle, ::ezlog::win_attr(color))
+#   define SET_COLOR(color) SetConsoleTextAttribute(g_handle, ::ezlog::win_attr(color))
+#elif defined(EZ_POSIX)
+#   include <unistd.h>
 #endif
 
 namespace ezlog
@@ -44,23 +37,28 @@ namespace ezlog
         trace, info, warn, error,
     };
 
-    class ezlog
+    class logger
     {
     public:
-        ezlog();
-        ezlog(level lvl);
-        ~ezlog() = default;
-
+        logger();
+        logger(level lvl);
+        ~logger() = default;
+        // TODO: replace with string_view
         void log(const std::string& msg, color c = color::default_);
-        
+        template<typename... Args>
+        void log(color c, std::format_string<Args...>, Args&&... args)
+        {
+            write(std::format("{}", std::forward<Args>(args)...), c);
+        }
+
         void trace(const std::string& msg);
         void info(const std::string& msg);
         void warn(const std::string& msg);
         void error(const std::string& msg);
     private:
         void write(std::string_view msg, color c); 
-
         void log_if(const std::string& msg, level lvl, color c = color::default_);
         level level_{level::trace};
+        bool ansi_enabled_{true};
     };
 }

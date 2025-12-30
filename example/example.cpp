@@ -5,7 +5,7 @@
 
 int main()
 {
-    std::unique_ptr<ezlog::ezlog> logger = std::make_unique<ezlog::ezlog>(ezlog::level::info);
+    std::unique_ptr<ezlog::logger> logger = std::make_unique<ezlog::logger>(ezlog::level::info);
     logger->trace("logger is calling trace..."); // shouldn't get called
     logger->info("logger is calling info...");
     logger->warn("logger is calling warn...");

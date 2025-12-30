@@ -1,73 +1,64 @@
 
 #include "ezlog/ezlog.hpp"
 #include "ezlog/detail.hpp"
+#include "ezlog/platform.hpp"
 
 namespace ezlog
 {
-    ezlog::ezlog() 
+    logger::logger() 
         : level_{level::trace}
     {
-        char* wt_session = getenv("WT_SESSION");
-        if(wt_session != nullptr && strlen(wt_session) > 0) // 64 should be enough bytes
-        {
-            #define EZ_POSIX
-        }
+        ansi_enabled_ = platform::enable_ansi();
     }
     
-    ezlog::ezlog(level lvl)
+    logger::logger(level lvl)
         : level_{lvl}
     {
-        char* wt_session = getenv("WT_SESSION");
-        if(wt_session != nullptr && strlen(wt_session) > 0) // 64 should be enough bytes
-        {
-            #define EZ_POSIX
-        }
+        ansi_enabled_ = platform::enable_ansi();
     }
     
-    void ezlog::log(const std::string& msg, color c)
+    void logger::log(const std::string& msg, color c)
     {
         write(msg, c);
     }
         
-    void ezlog::trace(const std::string& msg)
+    void logger::trace(const std::string& msg)
     {
         log_if(msg, level::trace);
     }
 
-    void ezlog::info(const std::string& msg)
+    void logger::info(const std::string& msg)
     {
         log_if(msg, level::info, color::green);
     }
 
-    void ezlog::warn(const std::string& msg)
+    void logger::warn(const std::string& msg)
     {
         log_if(msg, level::warn, color::yellow);
     }
 
-    void ezlog::error(const std::string& msg)
+    void logger::error(const std::string& msg)
     {
         log_if(msg, level::error, color::red);
     }
 
-    void ezlog::write(std::string_view msg, color c)
+    void logger::write(std::string_view msg, color c)
     {
-        #if defined(EZ_POSIX)
-        // TODO: fix std::format overload error
+    #if defined(EZ_POSIX)
         detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
-        #elif defined(EZ_WINDOWS)
+    #elif defined(EZ_WINDOWS)
         SET_COLOR(c);
         detail::quick_print("{}", msg);
         SET_COLOR(color::default_);
-        #endif
+    #endif
     }
 
-    void ezlog::log_if(const std::string& msg, level lvl, color c)
+    void logger::log_if(const std::string& msg, level lvl, color c)
     {
         if(lvl >= level_)
             write(msg, c);
     }
 
-    
     // TODO: this is a copout to avoid windows not being able to find ansi definition
     // make this cleaner (line 124)
     #ifdef EZ_POSIX

@@ -13,6 +13,7 @@ if (EZLOG_BUILD_LIB)
     add_library(ezlog STATIC
         src/ezlog.cpp
         src/detail.cpp
+        src/platform.cpp
     )
 
     target_include_directories(ezlog
