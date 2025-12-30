@@ -1,34 +1,37 @@
 cmake_minimum_required(VERSION 3.15)
-project(ezlog LANGUAGES C CXX)
+project(ezlog LANGUAGES CXX)
 
-set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
-option(EZLOG_LIB "Use compiled library" ON)
-if(EZLOG_LIB)
-    file(GLOB_RECURSE
-        LIB_FILES
-        src/*.cpp
-        include/*.hpp
+option(EZLOG_BUILD_LIB "Build ezlog static library" ON)
+option(EZLOG_BUILD_EXAMPLE "Build ezlog example" ON)
+option(EZLOG_SINGLE_HEADER_EXAMPLE "Use single_include for example" OFF)
+
+if (EZLOG_BUILD_LIB)
+    add_library(ezlog STATIC
+        src/ezlog.cpp
+        src/detail.cpp
     )
 
-    add_library(ezlog STATIC ${LIB_FILES})
-    target_include_directories(ezlog PUBLIC include)
+    target_include_directories(ezlog
+        PUBLIC
+            $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+            $<INSTALL_INTERFACE:include>
+    )
 endif()
 
-option(EZLOG_LIB_EXAMPLE "Build ezlog examples" ON)
-option(EZLOG_SINGLEHEADER_EXAMPLE "Build ezlog examples" OFF)
-if(EZLOG_SINGLEHEADER_EXAMPLE)
+if (EZLOG_BUILD_EXAMPLE)
     add_executable(ez_example example/example.cpp)
-    target_include_directories(ez_example PUBLIC single_include)
-elseif(EZLOG_LIB_EXAMPLE)
-    # option(EZLOG_HEADER_ONLY "Use `single_include` only" ON)
-    add_executable(ez_example example/example.cpp)
-    target_include_directories(ez_example PUBLIC include)
-    target_link_libraries(ez_example PRIVATE ezlog)
+
+    if (EZLOG_SINGLE_HEADER_EXAMPLE)
+        target_include_directories(ez_example PRIVATE single_include)
+    else()
+        target_link_libraries(ez_example PRIVATE ezlog)
+    endif()
 endif()
 
-if(MINGW)
-    target_link_libraries(ez_example PRIVATE "-lstdc++exp")
+if (MINGW)
+    target_link_libraries(ezlog PRIVATE stdc++exp)
 endif()
-

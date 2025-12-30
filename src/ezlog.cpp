@@ -53,7 +53,7 @@ namespace ezlog
     {
         #if defined(EZ_POSIX)
         // TODO: fix std::format overload error
-        detail::quick_print(std::format("{}{}{}", ansi(c), msg, ansi(color::default_)));
+        detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
         #elif defined(EZ_WINDOWS)
         SET_COLOR(c);
         detail::quick_print("{}", msg);

@@ -34,27 +34,6 @@ static const HANDLE g_handle = GetStdHandle(STD_OUTPUT_HANDLE);
 
 namespace ezlog
 {
-
-    enum class color
-    {
-        default_,
-        black,
-        red,
-        green,
-        yellow,
-        blue,
-        magenta,
-        cyan,
-        white,
-        bright_red,
-        bright_green,
-        bright_yellow,
-        bright_blue,
-        bright_magenta,
-        bright_cyan,
-        bright_white,
-    };
-
     // TODO: move these two functions into a seperate namespace
     // user does not need access to these helper functions
     constexpr std::string_view ansi(color c);
