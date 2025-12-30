@@ -1,16 +1,20 @@
 #include "ezlog/ezlog.hpp"
-#include "ezlog/detail.hpp"
-#include "ezlog/platform.hpp"
+#include "detail/quick_print.hpp"
+#include "platform/platform.hpp"
+#include "detail/color_ansi.hpp"
+#include "detail/color_win32.hpp"
 
 namespace ezlog
 {
+    static platform::backend g_backend = platform::detect_backend();
+
     logger::logger() 
-        : level_{level::trace}, backend_{platform::detect_color_backend()}
+        : level_{level::trace}
     {
     }
     
     logger::logger(level lvl)
-        : level_{lvl}, backend_{platform::detect_color_backend()}
+        : level_{lvl}
     {
     }
     
@@ -41,22 +45,7 @@ namespace ezlog
 
     void logger::write(std::string_view msg, color c)
     {
-        using namespace platform;
-        switch(backend_)
-        {
-            case color_backend::ansi:
-                detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
-                break;
-            case color_backend::win32:
-                SetConsoleTextAttribute(console_, win_attr(c));
-                detail::quick_print("{}", msg);
-                SetConsoleTextAttribute(console_, win_attr(color::default_));
-                break;
-            // if no api, just log the message (no color)
-            case color_backend::none:
-                detail::quick_print("{}", msg);
-                break;
-        }
+        platform::write_color(msg, c, g_backend);
     }
 
     void logger::log_if(std::string_view msg, level lvl, color c)

@@ -8,9 +8,7 @@
 int main()
 {
     ezlog::logger log{ezlog::level::info};
-    using namespace ezlog;
-    log.log(color::cyan, "this is cyan regular");
-    log.log(color::cyan, "this is cyan intense");
+    log.info("working");
 
     // using namespace std;
     // auto start = chrono::steady_clock::now();

@@ -1,6 +1,6 @@
 #include <string>
 
-#include "ezlog/detail.hpp"
+#include "detail/quick_print.hpp"
 
 namespace ezlog::detail
 {
