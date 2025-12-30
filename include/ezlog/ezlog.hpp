@@ -15,7 +15,7 @@
 
 #include "ezlog/color.hpp"
 #include "ezlog/detail.hpp"
-#include "ezlog/core.hpp"
+#include "ezlog/platform.hpp"
 
 #if defined(EZ_WINDOWS)
 #   include <Windows.h>
@@ -37,6 +37,10 @@ namespace ezlog
         trace, info, warn, error,
     };
 
+    // TODO: add name_ and a way to set how messages are printed
+    // e.g. set_pattern("%n [%l]: %s");
+    // %n could be name and %l could be level and %s could be the message
+    // modify the `write` method to use that set pattern
     class logger
     {
     public:

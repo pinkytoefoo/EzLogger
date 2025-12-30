@@ -1,4 +1,3 @@
-
 #include "ezlog/ezlog.hpp"
 #include "ezlog/detail.hpp"
 #include "ezlog/platform.hpp"
@@ -21,7 +20,7 @@ namespace ezlog
     {
         write(msg, c);
     }
-        
+
     void logger::trace(std::string_view msg)
     {
         log_if(msg, level::trace);
@@ -44,13 +43,18 @@ namespace ezlog
 
     void logger::write(std::string_view msg, color c)
     {
-    #if defined(EZ_POSIX)
-        detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
-    #elif defined(EZ_WINDOWS)
-        SET_COLOR(c);
-        detail::quick_print("{}", msg);
-        SET_COLOR(color::default_);
-    #endif
+        if(ansi_enabled_)
+            detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
+        else   
+        {
+        #ifdef EZ_WINDOWS
+            SET_COLOR(c);
+            detail::quick_print("{}", msg);
+            SET_COLOR(color::default_);
+        #else 
+            detail::quick_print("{}", msg);
+        #endif
+        }
     }
 
     void logger::log_if(std::string_view msg, level lvl, color c)
@@ -59,8 +63,6 @@ namespace ezlog
             write(msg, c);
     }
 
-    // TODO: this is a copout to avoid windows not being able to find ansi definition
-    // make this cleaner (line 124)
     #ifdef EZ_POSIX
     constexpr std::string_view ansi(color c)
     {

@@ -1,5 +1,4 @@
 #include "ezlog/platform.hpp"
-#include "ezlog/core.hpp"
 
 namespace ezlog::platform
 {
