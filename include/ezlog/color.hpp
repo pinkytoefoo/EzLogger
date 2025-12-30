@@ -5,6 +5,7 @@ namespace ezlog
     enum class color
     {
         default_,
+        intensify,
         black,
         red,
         green,

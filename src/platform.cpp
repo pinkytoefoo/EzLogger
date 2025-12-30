@@ -1,29 +1,32 @@
 #include "ezlog/platform.hpp"
 
+#if defined(_WIN32)
+#   include <Windows.h>
+#endif
+
 namespace ezlog::platform
 {
-    bool enable_ansi()
+    color_backend detect_color_backend()
     {
-    #ifdef EZ_WINDOWS
-        char* wt_session = getenv("WT_SESSION");
-        if(wt_session != nullptr && strlen(wt_session) > 0) // 64 should be enough bytes
-            return true;
-        
+    #if defined(_WIN32)
+        // windows terminal emulator / ansi capable terminalsS
+        if (const char* wt = getenv("WT_SESSION"))
+            return color_backend::ansi;
+
         HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
         if (h == INVALID_HANDLE_VALUE)
-            return false;
+            return color_backend::none;
 
         DWORD mode = 0;
-        if (!GetConsoleMode(h, &mode))
-            return false;
+        if (GetConsoleMode(h, &mode) &&
+            (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+            return color_backend::ansi;
 
-        if (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)
-            return true;
-
-        if (!SetConsoleMode(h, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING))
-            return false;
+        return color_backend::win32;
+    #else
+        // assume posix and ansi capable terminal
+        return color_backend::ansi;
     #endif
-        return true;
     }
 }
 

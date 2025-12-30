@@ -151,7 +151,7 @@ namespace ezlog
 
     // TODO: this is a copout to avoid windows not being able to find ansi definition
     // make this cleaner (line 124)
-    #ifdef EZ_POSIX
+
     constexpr std::string_view ansi(color c)
     {
         switch (c)
@@ -167,7 +167,7 @@ namespace ezlog
             default:                return "\033[00m";
         }
     }
-    #elifdef EZ_WINDOWS 
+    
     constexpr unsigned short win_attr(color c)
     {
         switch (c)
@@ -184,5 +184,4 @@ namespace ezlog
             default:                    return 0x0007;
         }
     }
-    #endif
 }

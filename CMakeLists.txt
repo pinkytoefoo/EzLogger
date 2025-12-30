@@ -18,6 +18,7 @@ if (EZLOG_BUILD_LIB)
 
     target_include_directories(ezlog
         PUBLIC
+            src
             $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
             $<INSTALL_INTERFACE:include>
     )

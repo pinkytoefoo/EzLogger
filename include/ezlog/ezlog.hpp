@@ -7,6 +7,9 @@
 
 #pragma once
 
+#if defined(_WIN32)
+#   include <Windows.h>
+#endif
 
 #include <string>
 #include <cstdlib>
@@ -16,14 +19,6 @@
 #include "ezlog/color.hpp"
 #include "ezlog/detail.hpp"
 #include "ezlog/platform.hpp"
-
-#if defined(EZ_WINDOWS)
-#   include <Windows.h>
-static const HANDLE g_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-#   define SET_COLOR(color) SetConsoleTextAttribute(g_handle, ::ezlog::win_attr(color))
-#elif defined(EZ_POSIX)
-#   include <unistd.h>
-#endif
 
 namespace ezlog
 {
@@ -50,9 +45,9 @@ namespace ezlog
 
         void log(std::string_view, color c = color::default_);
         template<typename... Args>
-        void log(color c, std::format_string<Args...>, Args&&... args)
+        void log(color c, std::format_string<Args...> str, Args&&... args)
         {
-            write(std::format("{}", std::forward<Args>(args)...), c);
+            write(std::format(str, std::forward<Args>(args)...), c);
         }
 
         void trace(std::string_view msg);
@@ -62,7 +57,45 @@ namespace ezlog
     private:
         void write(std::string_view msg, color c); 
         void log_if(std::string_view msg, level lvl, color c = color::default_);
+
         level level_{level::trace};
-        bool ansi_enabled_{true};
+        platform::color_backend backend_{platform::color_backend::ansi};
+    #if defined(_WIN32)
+        HANDLE console_{nullptr};
+    #endif
     };
+
+    constexpr std::string_view ansi(color c)
+    {
+        switch (c)
+        {
+            case color::red:        return "\033[31m";
+            case color::green:      return "\033[32m";
+            case color::yellow:     return "\033[33m";
+            case color::blue:       return "\033[34m";
+            case color::magenta:    return "\033[35m";
+            case color::cyan:       return "\033[36m";
+            case color::white:      return "\033[37m";
+            // case color::default_:   return "\033[38m";
+            default:                return "\033[00m";
+        }
+    }
+
+    constexpr unsigned short win_attr(color c)
+    {
+        switch (c)
+        {
+            case color::black:          return 0x0000;
+            case color::blue:           return 0x0001;
+            case color::green:          return 0x0002;
+            case color::bright_blue:    return 0x0003;
+            case color::red:            return 0x0004;
+            case color::magenta:        return 0x0005;
+            case color::yellow:         return 0x0006;
+            case color::white:          return 0x0007;
+            case color::default_:       return 0x0007;
+            case color::intensify:      return 0x0008;
+            default:                    return 0x0007;
+        }
+    }
 }
