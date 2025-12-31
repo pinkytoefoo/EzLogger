@@ -40,9 +40,11 @@ namespace ezlog::platform
                 detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
                 break;
             case backend::win32:
+            #if defined(_WIN32)
                 SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), win_attr(c));
                 detail::quick_print("{}", msg);
                 SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), win_attr(color::default_));
+            #endif
                 break;
             // if no api, just log the message (no color)
             case backend::none:

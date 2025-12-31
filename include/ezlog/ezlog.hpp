@@ -25,10 +25,6 @@ namespace ezlog
         trace, info, warn, error,
     };
 
-    // TODO: add name_ and a way to set how messages are printed
-    // e.g. set_pattern("%n [%l]: %s");
-    // %n could be name and %l could be level and %s could be the message
-    // modify the `write` method to use that set pattern
     class logger
     {
     public:
@@ -49,9 +45,9 @@ namespace ezlog
         void warn(std::string_view msg);
         void error(std::string_view msg);
     private:
-        void write(std::string_view msg, color c); 
         void log_if(std::string_view msg, level lvl, color c = color::default_);
-
+        void write(std::string_view msg, color c);
+        
         level level_{level::trace};
     };
 }

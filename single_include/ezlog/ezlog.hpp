@@ -1,3 +1,4 @@
+
 //           _             
 //   ___ ___| | ___   __ _ 
 //  / _ \_  / |/ _ \ / _` |
@@ -7,57 +8,21 @@
 
 #pragma once
 
-#include <cstdlib>
-
-// TODO: implement this some way
-// bool checkTerminalEmulator()
-// {
-//     char* wtSession = getenv("WT_SESSION");
-//     return (wtSession != nullptr && std::string(wtSession).length() > 0);
-// }
-
-#if defined(__unix__) || defined(__unix) || (defined(__APPLE__) && defined(__MACH__))
-#   define EZ_POSIX
-#elif defined(_WIN32) || defined(_WIN64)
-#   define EZ_WINDOWS
-#endif
-
-#if defined(EZ_WINDOWS)
+#if defined(_WIN32)
 #   include <Windows.h>
-#elif defined(EZ_POSIX)
-#   include <unistd.h>
 #endif
 
 #include <string>
+#include <cstdlib>
 #include <format>
 #include <cstring>
-
-#ifdef EZ_WINDOWS
-static const HANDLE g_handle = GetStdHandle(STD_OUTPUT_HANDLE);
-#define SET_COLOR(color) SetConsoleTextAttribute(g_handle, ::ezlog::win_attr(color))
-#endif
-
-namespace detail
-{
-    void quick_print(std::string_view s)
-    {
-        std::fputs(s.data(), stdout);
-        std::fputc('\n', stdout);
-    }
-
-    template<typename... Args>
-    void quick_print(std::format_string<Args...> str, Args&&... args)
-    {
-        std::fputs(std::format(str, std::forward<Args>(args)...).c_str(), stdout);
-        std::fputc('\n', stdout);
-    }
-}
 
 namespace ezlog
 {
     enum class color
     {
         default_,
+        intensify,
         black,
         red,
         green,
@@ -75,83 +40,6 @@ namespace ezlog
         bright_white,
     };
 
-    // TODO: move these two functions into a seperate namespace
-    // user does not need access to these helper functions
-    constexpr std::string_view ansi(color c);
-    constexpr unsigned short win_attr(color c);
-
-    enum class level
-    {
-        trace, info, warn, error,
-    };
-
-    class ezlog
-    {
-    public:
-        ezlog()
-            : level_{level::trace}
-        {
-            char* wt_session = getenv("WT_SESSION");
-            if(wt_session != nullptr && strlen(wt_session) > 0) // 64 should be enough bytes
-            {
-                #define EZ_POSIX
-            }
-        }
-        ezlog(level lvl)
-        : level_{lvl}
-        {
-        }
-        ~ezlog() = default;
-
-        void log(const std::string& msg, color c = color::default_)
-        {
-            write(msg, c);
-        }
-        
-        void trace(const std::string& msg)
-        {
-            log_if(msg, level::trace);
-        }
-
-        void info(const std::string& msg)
-        {
-            log_if(msg, level::info, color::green);
-        }
-
-        void warn(const std::string& msg)
-        {
-            log_if(msg, level::warn, color::yellow);
-        }
-
-        void error(const std::string& msg)
-        {
-            log_if(msg, level::error, color::red);
-        }
-    
-    private:
-        void write(std::string_view msg, color c)
-        {
-            #if defined(EZ_POSIX)
-            detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
-            #elif defined(EZ_WINDOWS)
-            SET_COLOR(c);
-            detail::quick_print("{}", msg);
-            SET_COLOR(color::default_);
-            #endif
-        }
-
-        void log_if(const std::string& msg, level lvl, color c = color::default_)
-        {
-            if(lvl >= level_)
-                write(msg, c);
-        }
-
-        level level_{level::trace};
-    };
-
-    // TODO: this is a copout to avoid windows not being able to find ansi definition
-    // make this cleaner (line 124)
-
     constexpr std::string_view ansi(color c)
     {
         switch (c)
@@ -167,7 +55,8 @@ namespace ezlog
             default:                return "\033[00m";
         }
     }
-    
+
+    #if defined(_WIN32)
     constexpr unsigned short win_attr(color c)
     {
         switch (c)
@@ -181,7 +70,166 @@ namespace ezlog
             case color::yellow:         return 0x0006;
             case color::white:          return 0x0007;
             case color::default_:       return 0x0007;
+            case color::intensify:      return 0x0008;
             default:                    return 0x0007;
         }
     }
+    #else
+    constexpr unsigned short win_attr(color c) { return -1; }
+    #endif
+    
+    namespace detail
+    {
+        void quick_print(std::string_view s)
+        {
+            std::fputs(s.data(), stdout);
+            std::fputc('\n', stdout);
+        }
+        
+        template<typename... Args>
+        void quick_print(std::format_string<Args...> str, Args&&... args)
+        {
+            std::fputs(std::format(str, std::forward<Args>(args)...).c_str(), stdout);
+            std::fputc('\n', stdout);
+        }
+    }
+    
+    namespace platform
+    {
+        enum class backend
+        {
+            none,
+            ansi,
+            win32     
+        };
+        
+        backend detect_backend()
+        {
+        #if defined(_WIN32)
+            // windows terminal emulator / ansi capable terminalsS
+            if (const char* wt = getenv("WT_SESSION"))
+                return backend::ansi;
+
+            HANDLE h = GetStdHandle(STD_OUTPUT_HANDLE);
+            if (h == INVALID_HANDLE_VALUE)
+                return backend::none;
+
+            DWORD mode = 0;
+            if (GetConsoleMode(h, &mode) &&
+                (mode & ENABLE_VIRTUAL_TERMINAL_PROCESSING))
+                return backend::ansi;
+
+            return backend::win32;
+        #else
+            // assume posix and ansi capable terminal
+            return color_backend::ansi;
+        #endif
+        }
+
+        void write_color(std::string_view msg, color c, backend b)
+        {
+            switch(b)
+            {
+                case backend::ansi:
+                    detail::quick_print("{}{}{}", ansi(c), msg, ansi(color::default_));
+                    break;
+                case backend::win32:
+                #if defined(_WIN32)
+                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), win_attr(c));
+                    detail::quick_print("{}", msg);
+                    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), win_attr(color::default_));
+                #endif
+                    break;
+                // if no api, just log the message (no color)
+                case backend::none:
+                    detail::quick_print("{}", msg);
+                    break;
+            }
+        }
+
+        template<typename... Args>
+        void write_color_fmt(color c, backend b, std::format_string<Args...> str, Args&&... args)
+        {
+            switch(b)
+            {
+                case backend::ansi:
+                quick_print(str, ansi(c), std::forward<Args>(args)..., ansi(color::default_));
+                break;
+                case backend::win32:
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), win_attr(c));
+                quick_print(str, std::forward<Args>(args)...);
+                SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), win_attr(color::default_));
+                break;
+                // if no api, just log the message (no color)
+                case backend::none:
+                quick_print(str, std::forward<Args>(args)...);
+                break;
+            }
+        }
+    }
+
+    enum class level
+    {
+        trace, info, warn, error,
+    };
+    
+    static platform::backend g_backend = platform::detect_backend();
+
+    class logger
+    {
+    public:
+        logger()
+            : level_{level::trace}
+        {
+        }
+
+        logger(level lvl)
+            : level_{lvl}
+        {
+        }
+        ~logger() = default;
+
+        void log(std::string_view msg, color c)
+        {
+            write(msg, c);
+        }
+        template<typename... Args>
+        void log(color c, std::format_string<Args...> str, Args&&... args)
+        {
+            write(std::format(str, std::forward<Args>(args)...), c);
+        }
+
+        void trace(std::string_view msg)
+        {
+            log_if(msg, level::trace);
+        }
+
+        void info(std::string_view msg)
+        {
+            log_if(msg, level::info, color::green);
+        }
+
+        void warn(std::string_view msg)
+        {
+            log_if(msg, level::warn, color::yellow);
+        }
+
+        void error(std::string_view msg)
+        {
+            log_if(msg, level::error, color::red);
+        }
+    private:
+        void log_if(std::string_view msg, level lvl, color c = color::default_)
+        {
+            if(lvl >= level_)
+                write(msg, c);
+        }
+
+        void write(std::string_view msg, color c)
+        {
+            platform::write_color(msg, c, g_backend);
+        }
+        
+        level level_{level::trace};
+    };
 }

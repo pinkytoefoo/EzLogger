@@ -4,6 +4,10 @@
 #include "detail/color_ansi.hpp"
 #include "detail/color_win32.hpp"
 
+#include <iostream>
+#include <string>
+#include <sstream>
+
 namespace ezlog
 {
     static platform::backend g_backend = platform::detect_backend();
@@ -43,14 +47,14 @@ namespace ezlog
         log_if(msg, level::error, color::red);
     }
 
-    void logger::write(std::string_view msg, color c)
-    {
-        platform::write_color(msg, c, g_backend);
-    }
-
     void logger::log_if(std::string_view msg, level lvl, color c)
     {
         if(lvl >= level_)
             write(msg, c);
+    }
+
+    void logger::write(std::string_view msg, color c)
+    {
+        platform::write_color(msg, c, g_backend);
     }
 }
