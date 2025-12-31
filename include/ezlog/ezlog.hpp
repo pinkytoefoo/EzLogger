@@ -33,17 +33,36 @@ namespace ezlog
         ~logger() = default;
 
         void log(std::string_view, color c = color::default_);
+        void trace(std::string_view msg);
+        void info(std::string_view msg);
+        void warn(std::string_view msg);
+        void error(std::string_view msg);
 
         template<typename... Args>
         void log(color c, std::format_string<Args...> str, Args&&... args)
         {
             write(std::format(str, std::forward<Args>(args)...), c);
         }
-
-        void trace(std::string_view msg);
-        void info(std::string_view msg);
-        void warn(std::string_view msg);
-        void error(std::string_view msg);
+        template<typename... Args>
+        void trace(std::format_string<Args...> str, Args&&... args)
+        {
+            log_if(std::format(str, std::forward<Args>(args)...), level::trace, color::default_);
+        }
+        template<typename... Args>
+        void info(std::format_string<Args...> str, Args&&... args)
+        {
+            log_if(std::format(str, std::forward<Args>(args)...), level::info, color::green);
+        }
+        template<typename... Args>
+        void warn(color c, std::format_string<Args...> str, Args&&... args)
+        {
+            log_if(std::format(str, std::forward<Args>(args)...), level::warn, color::yellow);
+        }
+        template<typename... Args>
+        void error(color c, std::format_string<Args...> str, Args&&... args)
+        {
+            log_if(std::format(str, std::forward<Args>(args)...), level::trace, color::red);
+        }
     private:
         void log_if(std::string_view msg, level lvl, color c = color::default_);
         void write(std::string_view msg, color c);
